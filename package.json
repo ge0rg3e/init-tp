@@ -1,0 +1,63 @@
+{
+	"name": "init-tp",
+	"version": "0.0.3",
+	"description": "Quickly set up Node.js projects with TypeScript.",
+	"main": "dist/index.js",
+	"bin": {
+		"init-tp": "./dist/index.js"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ge0rg3e/init-tp.git"
+	},
+	"keywords": [
+		"nodejs",
+		"typescript",
+		"initializer",
+		"boilerplate",
+		"cli",
+		"ini-tp"
+	],
+	"author": "Ge0rg3e",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/ge0rg3e/init-tp/issues"
+	},
+	"homepage": "https://github.com/ge0rg3e/init-tp#readme",
+	"scripts": {
+		"publish": "npm publish --access public",
+		"prepublishOnly": "npm run build",
+		"build": "tsc"
+	},
+	"dependencies": {
+		"axios": "^1.9.0",
+		"commander": "^14.0.0",
+		"fs-extra": "^11.3.0",
+		"inquirer": "^12.6.3"
+	},
+	"prettier": {
+		"$schema": "http://json.schemastore.org/prettierrc",
+		"endOfLine": "lf",
+		"printWidth": 200,
+		"quoteProps": "as-needed",
+		"semi": true,
+		"singleQuote": true,
+		"tabWidth": 4,
+		"trailingComma": "none",
+		"useTabs": true,
+		"overrides": [
+			{
+				"files": "*.yml",
+				"options": {
+					"tabWidth": 2,
+					"useTabs": false
+				}
+			}
+		]
+	},
+	"devDependencies": {
+		"@types/fs-extra": "^11.0.4",
+		"@types/node": "^22.15.29",
+		"typescript": "^5.8.3"
+	}
+}
