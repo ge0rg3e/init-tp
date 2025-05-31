@@ -41,7 +41,7 @@ Please keep code style consistent and write clean, simple code.
 
 ## License
 
-[MIT](hLICENSE) License © Ge0rg3e
+[MIT](LICENSE) License © Ge0rg3e
 
 ---
 
