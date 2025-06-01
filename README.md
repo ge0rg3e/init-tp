@@ -13,13 +13,11 @@ Run the CLI:
 npx init-tp
 ```
 
-Then follow the prompts:
+or
 
-1. Enter your project name (lowercase, alphanumeric, hyphens allowed)
-2. Choose your TypeScript compiler (`tsc`, `esbuild`, or `swc`)
-3. Decide if you want to run `npm install` automatically
-
-The CLI will create a project folder with everything set up for you.
+```bash
+npx init-tp <project_name> --compiler <compiler> [--install]
+```
 
 ---
 
