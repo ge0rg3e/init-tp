@@ -82,9 +82,19 @@ const initProject = async (options: Partial<Answers> = {}) => {
 	const gitignorePath = path.join(projectDir, '.gitignore');
 	const gitignoreContent = 'node_modules/\ndist/\n.env';
 	const readmePath = path.join(projectDir, 'README.md');
+
+	const getNpxCommand = (packageManager: PackageManager) => {
+		switch (packageManager) {
+			case 'pnpm':
+				return 'pnpx init-tp';
+			default:
+				return 'npx init-tp';
+		}
+	};
+
 	const readmeContent = `# ${finalAnswers.projectName}
 
-Created using [npx init-tp](https://github.com/ge0rg3e/init-tp)`;
+Created using [${getNpxCommand(finalAnswers.packageManager)}](https://github.com/ge0rg3e/init-tp)`;
 
 	const buildScript = finalAnswers.compiler === 'tsc' ? 'tsc' : finalAnswers.compiler === 'esbuild' ? 'esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js' : 'swc src -d dist';
 
@@ -166,10 +176,10 @@ Created using [npx init-tp](https://github.com/ge0rg3e/init-tp)`;
 				finalAnswers.packageManager === 'npm'
 					? 'npm install'
 					: finalAnswers.packageManager === 'pnpm'
-					? 'pnpm install'
-					: finalAnswers.packageManager === 'yarn'
-					? 'yarn install'
-					: 'bun install';
+						? 'pnpm install'
+						: finalAnswers.packageManager === 'yarn'
+							? 'yarn install'
+							: 'bun install';
 
 			execSync(installCommand, { cwd: projectDir, stdio: 'inherit' });
 		} catch (error) {

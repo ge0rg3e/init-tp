@@ -1,6 +1,6 @@
 {
 	"name": "init-tp",
-	"version": "0.0.5",
+	"version": "0.0.6",
 	"description": "Quickly set up Node.js projects with TypeScript.",
 	"main": "dist/index.js",
 	"bin": {
