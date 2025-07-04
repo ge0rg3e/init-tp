@@ -16,7 +16,7 @@ npx init-tp
 or
 
 ```bash
-npx init-tp <project_name> --compiler <compiler> [--install]
+npx init-tp <project_name> --package-manager <packageManager> --compiler <compiler> [--install]
 ```
 
 ---
@@ -45,5 +45,5 @@ Please keep code style consistent and write clean, simple code.
 
 ## Links
 
--   [GitHub Repository](https://github.com/ge0rg3e/init-tp)
--   [Issues](https://github.com/ge0rg3e/init-tp/issues)
+- [GitHub Repository](https://github.com/ge0rg3e/init-tp)
+- [Issues](https://github.com/ge0rg3e/init-tp/issues)

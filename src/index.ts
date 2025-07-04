@@ -4,29 +4,20 @@ import { execSync } from 'child_process';
 import { program } from 'commander';
 import inquirer from 'inquirer';
 import fs from 'fs-extra';
-import axios from 'axios';
 import path from 'path';
 
 type Compilers = 'tsc' | 'esbuild' | 'swc';
+type PackageManager = 'npm' | 'pnpm';
 
 interface Answers {
 	compiler: Compilers;
 	projectName: string;
 	runInstall: boolean;
+	packageManager: PackageManager;
 }
 
 const validCompilers = ['tsc', 'esbuild', 'swc'];
-
-const isLatestVersion = async () => {
-	try {
-		const { data } = await axios.get(`https://registry.npmjs.org/${packageName}/latest`);
-		if (data.version !== packageVersion) {
-			console.warn(
-				`\x1b[33mWarning:\x1b[0m You are running version ${packageVersion} but the latest version is ${data.version}. Please update by running:\nnpm install -g ${packageName}@latest\n`
-			);
-		}
-	} catch {}
-};
+const validPackageManagers = ['npm', 'pnpm'];
 
 const initProject = async (options: Partial<Answers> = {}) => {
 	const questions: any[] = [];
@@ -54,12 +45,22 @@ const initProject = async (options: Partial<Answers> = {}) => {
 		});
 	}
 
+	if (!options.packageManager) {
+		questions.push({
+			type: 'list',
+			name: 'packageManager',
+			message: 'Choose a package manager:',
+			choices: ['npm', 'pnpm'],
+			default: 'npm'
+		});
+	}
+
 	// Only prompt for runInstall if it is undefined AND projectName or compiler is missing (interactive mode)
 	if (options.runInstall === undefined && !(options.projectName && options.compiler)) {
 		questions.push({
 			type: 'confirm',
 			name: 'runInstall',
-			message: 'Run npm install?',
+			message: 'Run package installation?',
 			default: true
 		});
 	}
@@ -69,6 +70,7 @@ const initProject = async (options: Partial<Answers> = {}) => {
 	const finalAnswers: Answers = {
 		projectName: options.projectName ?? answers.projectName!,
 		compiler: options.compiler ?? answers.compiler!,
+		packageManager: options.packageManager ?? answers.packageManager!,
 		runInstall: options.runInstall ?? answers.runInstall!
 	};
 
@@ -79,16 +81,45 @@ const initProject = async (options: Partial<Answers> = {}) => {
 	const indexPath = path.join(srcDir, 'index.ts');
 	const gitignorePath = path.join(projectDir, '.gitignore');
 	const gitignoreContent = 'node_modules/\ndist/\n.env';
+	const readmePath = path.join(projectDir, 'README.md');
+	const readmeContent = `# ${finalAnswers.projectName}
+
+Created using [npx init-tp](https://github.com/ge0rg3e/init-tp)`;
 
 	const buildScript = finalAnswers.compiler === 'tsc' ? 'tsc' : finalAnswers.compiler === 'esbuild' ? 'esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js' : 'swc src -d dist';
 
 	const startScript = finalAnswers.compiler === 'swc' ? 'node dist/src/index.js' : 'node dist/index.js';
 	const devScript = 'tsx watch src/index.ts';
 
+	// Package manager specific configurations
+	const getPackageManagerConfig = (pm: PackageManager) => {
+		switch (pm) {
+			case 'pnpm':
+				return {
+					packageManager: 'pnpm',
+					engines: { node: '>=16.0.0' },
+					packageManagerFiles: {
+						'.npmrc': 'auto-install-peers=true\nstrict-peer-dependencies=false',
+						'pnpm-workspace.yaml': 'packages:\n  - "."'
+					}
+				};
+			default: // npm
+				return {
+					packageManager: 'npm',
+					engines: { node: '>=16.0.0' },
+					packageManagerFiles: {}
+				};
+		}
+	};
+
+	const pmConfig = getPackageManagerConfig(finalAnswers.packageManager);
+
 	const packageJson = {
 		name: finalAnswers.projectName,
 		version: '0.0.1',
 		main: 'dist/index.js',
+		packageManager: pmConfig.packageManager,
+		engines: pmConfig.engines,
 		scripts: {
 			start: startScript,
 			build: buildScript,
@@ -96,16 +127,17 @@ const initProject = async (options: Partial<Answers> = {}) => {
 		},
 		dependencies: {},
 		devDependencies: {
-			...(finalAnswers.compiler === 'tsc' ? { typescript: '^5.8.3' } : finalAnswers.compiler === 'esbuild' ? { esbuild: '^0.25.5' } : { '@swc/cli': '^0.7.7', '@swc/core': '^1.11.29' }),
-			'@types/node': '^18.0.0',
-			tsx: '^4.19.4'
+			...(finalAnswers.compiler === 'tsc' ? { typescript: '^5.8.3' } : finalAnswers.compiler === 'esbuild' ? { esbuild: '^0.25.5' } : { '@swc/cli': '^0.7.7', '@swc/core': '^1.12.9' }),
+			'@types/node': '^24.0.10',
+			tsx: '^4.20.3'
 		},
 		initTp: `v${packageVersion}`
 	};
 
 	const tsConfig = {
 		compilerOptions: {
-			target: 'es6',
+			target: 'es2017',
+			lib: ['es2017', 'dom'],
 			module: 'commonjs',
 			outDir: './dist',
 			rootDir: './src',
@@ -119,19 +151,34 @@ const initProject = async (options: Partial<Answers> = {}) => {
 	await fs.writeJson(packageJsonPath, packageJson, { spaces: 2 });
 	await fs.writeJson(tsConfigPath, tsConfig, { spaces: 2 });
 	await fs.writeFile(gitignorePath, gitignoreContent);
+	await fs.writeFile(readmePath, readmeContent);
 	await fs.writeFile(indexPath, '// Your TypeScript code here\nconsole.log("Hello, World!");');
 
+	// Create package manager specific files
+	for (const [filename, content] of Object.entries(pmConfig.packageManagerFiles)) {
+		await fs.writeFile(path.join(projectDir, filename), content);
+	}
+
 	if (finalAnswers.runInstall) {
-		console.log('Running npm install...');
+		console.log(`Running ${finalAnswers.packageManager} install...`);
 		try {
-			execSync('npm install', { cwd: projectDir, stdio: 'inherit' });
+			const installCommand =
+				finalAnswers.packageManager === 'npm'
+					? 'npm install'
+					: finalAnswers.packageManager === 'pnpm'
+					? 'pnpm install'
+					: finalAnswers.packageManager === 'yarn'
+					? 'yarn install'
+					: 'bun install';
+
+			execSync(installCommand, { cwd: projectDir, stdio: 'inherit' });
 		} catch (error) {
-			console.error('Error running npm install:', error);
+			console.error(`Error running ${finalAnswers.packageManager} install:`, error);
 			process.exit(1);
 		}
 	}
 
-	console.log(`✅ Project '${finalAnswers.projectName}' initialized in ${projectDir} using ${finalAnswers.compiler}.`);
+	console.log(`✅ Project '${finalAnswers.projectName}' initialized in ${projectDir} using ${finalAnswers.compiler} and ${finalAnswers.packageManager}.`);
 };
 
 program
@@ -139,13 +186,17 @@ program
 	.description('Quickly set up Node.js projects with TypeScript')
 	.argument('[projectName]', 'Name of the project')
 	.option('-c, --compiler <compiler>', `Choose TypeScript compiler (${validCompilers.join(', ')})`)
-	.option('-i, --install', 'Run npm install after setup')
-	.action(async (projectName, options) => {
+	.option('-p, --package-manager <packageManager>', `Choose package manager (${validPackageManagers.join(', ')})`)
+	.option('-i, --install', 'Run package installation after setup')
+	.action(async (projectName: string, options: any) => {
 		try {
-			await isLatestVersion();
-
 			if (options.compiler && !validCompilers.includes(options.compiler)) {
 				console.error(`\x1b[31mError:\x1b[0m Invalid compiler '${options.compiler}'. Choose one of: ${validCompilers.join(', ')}`);
+				process.exit(1);
+			}
+
+			if (options.packageManager && !validPackageManagers.includes(options.packageManager)) {
+				console.error(`\x1b[31mError:\x1b[0m Invalid package manager '${options.packageManager}'. Choose one of: ${validPackageManagers.join(', ')}`);
 				process.exit(1);
 			}
 
@@ -154,6 +205,7 @@ program
 			const finalOptions = {
 				projectName,
 				compiler: options.compiler as Compilers | undefined,
+				packageManager: options.packageManager as PackageManager | undefined,
 				runInstall: options.install
 			};
 
