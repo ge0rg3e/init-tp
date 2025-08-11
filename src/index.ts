@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { name as packageName, version as packageVersion } from '../package.json';
+import { version as packageVersion } from '../package.json';
 import { execSync } from 'child_process';
 import { program } from 'commander';
 import inquirer from 'inquirer';
@@ -137,8 +137,8 @@ Created using [${getNpxCommand(finalAnswers.packageManager)}](https://github.com
 		},
 		dependencies: {},
 		devDependencies: {
-			...(finalAnswers.compiler === 'tsc' ? { typescript: '^5.8.3' } : finalAnswers.compiler === 'esbuild' ? { esbuild: '^0.25.5' } : { '@swc/cli': '^0.7.7', '@swc/core': '^1.12.9' }),
-			'@types/node': '^24.0.10',
+			...(finalAnswers.compiler === 'tsc' ? { typescript: '^5.9.2' } : finalAnswers.compiler === 'esbuild' ? { esbuild: '^0.25.8' } : { '@swc/cli': '^0.7.8', '@swc/core': '^1.13.3' }),
+			'@types/node': '^24.2.1',
 			tsx: '^4.20.3'
 		},
 		initTp: `v${packageVersion}`
