@@ -137,9 +137,9 @@ Created using [${getNpxCommand(finalAnswers.packageManager)}](https://github.com
 		},
 		dependencies: {},
 		devDependencies: {
-			...(finalAnswers.compiler === 'tsc' ? { typescript: '^5.9.2' } : finalAnswers.compiler === 'esbuild' ? { esbuild: '^0.25.8' } : { '@swc/cli': '^0.7.8', '@swc/core': '^1.13.3' }),
-			'@types/node': '^24.2.1',
-			tsx: '^4.20.3'
+			...(finalAnswers.compiler === 'tsc' ? { typescript: '^5.9.2' } : finalAnswers.compiler === 'esbuild' ? { esbuild: '^0.25.10' } : { '@swc/cli': '^0.7.8', '@swc/core': '^1.13.19' }),
+			'@types/node': '^24.5.2',
+			tsx: '^4.20.5'
 		},
 		initTp: `v${packageVersion}`
 	};
@@ -176,10 +176,10 @@ Created using [${getNpxCommand(finalAnswers.packageManager)}](https://github.com
 				finalAnswers.packageManager === 'npm'
 					? 'npm install'
 					: finalAnswers.packageManager === 'pnpm'
-						? 'pnpm install'
-						: finalAnswers.packageManager === 'yarn'
-							? 'yarn install'
-							: 'bun install';
+					? 'pnpm install'
+					: finalAnswers.packageManager === 'yarn'
+					? 'yarn install'
+					: 'bun install';
 
 			execSync(installCommand, { cwd: projectDir, stdio: 'inherit' });
 		} catch (error) {
