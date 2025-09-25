@@ -22,6 +22,12 @@ const validPackageManagers = ['npm', 'pnpm'];
 const initProject = async (options: Partial<Answers> = {}) => {
 	const questions: any[] = [];
 
+	// Validate projectName if supplied via CLI to prevent path traversal
+	if (options.projectName && !/^[a-z0-9-]+$/.test(options.projectName)) {
+		console.error('Invalid project name. It must be lowercase alphanumeric with optional hyphens.');
+		process.exit(1);
+	}
+
 	if (!options.projectName) {
 		questions.push({
 			type: 'input',
